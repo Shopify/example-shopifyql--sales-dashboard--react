@@ -37,4 +37,4 @@ This repository is a documentation sample. It doesn't accept issues or contribut
 
 ## License
 
-This sample is released under the [MIT License](./LICENSE).
+This sample is released under the [MIT License](./LICENSE.md).
