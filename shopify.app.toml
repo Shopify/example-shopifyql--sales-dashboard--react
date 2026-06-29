@@ -1,0 +1,20 @@
+# This file stores configuration for your Shopify app.
+# `shopify app config link` populates client_id, application_url, and redirect_urls.
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+client_id = ""
+
+# [START sales-dashboard.scopes]
+[access_scopes]
+# read_reports grants access to a store's analytics and reporting data, which
+# ShopifyQL queries read through the shopifyqlQuery field. Request it when the
+# merchant installs your app.
+scopes = "read_reports"
+# [END sales-dashboard.scopes]
+
+[webhooks]
+api_version = "2025-10"
+
+  # Handled by: /app/routes/webhooks.app.uninstalled.jsx
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks/app/uninstalled"
