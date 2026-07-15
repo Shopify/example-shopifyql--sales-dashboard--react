@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {useLoaderData, useNavigation} from 'react-router';
 import {LineChart, PolarisVizProvider} from '@shopify/polaris-viz';
 import '@shopify/polaris-viz/build/esm/styles.css';
@@ -68,6 +69,15 @@ export default function Index() {
   const {sales, currencyCode, topProducts} = useLoaderData();
   const navigation = useNavigation();
 
+  // [START sales-dashboard.client-only]
+  // Polaris Viz reads `window` when it renders, so the chart can't run during
+  // server-side rendering. Track when the component has mounted on the client,
+  // and render the chart only after that. The rest of the page still renders on
+  // the server.
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+  // [END sales-dashboard.client-only]
+
   // [START sales-dashboard.parse-errors]
   // A query that can't parse reports problems in parseErrors instead of
   // throwing, so check it before reading tableData.
@@ -123,14 +133,13 @@ export default function Index() {
   // [END sales-dashboard.format]
 
   // [START sales-dashboard.totals]
-  // WITH TOTALS repeats the period total on every row, and COMPARE TO adds a
-  // comparison_total_sales__previous_period value for each day. Sum those for
-  // last week's total, guarding divide-by-zero so a new store isn't misleading.
+  // WITH TOTALS repeats the period total on every row for this period and, with
+  // COMPARE TO, for the compared period too. Read both from the first row, then
+  // compute the change yourself, guarding divide-by-zero so a new store isn't
+  // misleading.
   const totalSales = rows[0]?.['total_sales__totals'] ?? '0';
-  const previousTotal = rows.reduce(
-    (sum, row) =>
-      sum + Number(row['comparison_total_sales__previous_period'] ?? 0),
-    0,
+  const previousTotal = Number(
+    rows[0]?.['comparison_total_sales__previous_period__totals'] ?? 0,
   );
   const percentChange =
     previousTotal === 0
@@ -201,24 +210,26 @@ export default function Index() {
 
       {/* [START sales-dashboard.chart] */}
       <s-section heading="Daily trend">
-        <PolarisVizProvider>
-          <div style={{height: 320}}>
-            <LineChart
-              xAxisOptions={{
-                labelFormatter: (value) => shortDate.format(new Date(value)),
-              }}
-              data={[
-                {
-                  name: 'Total sales',
-                  data: rows.map((row) => ({
-                    key: row['day'],
-                    value: Number(row['total_sales']),
-                  })),
-                },
-              ]}
-            />
-          </div>
-        </PolarisVizProvider>
+        <div style={{height: 320}}>
+          {isClient ? (
+            <PolarisVizProvider>
+              <LineChart
+                xAxisOptions={{
+                  labelFormatter: (value) => shortDate.format(new Date(value)),
+                }}
+                data={[
+                  {
+                    name: 'Total sales',
+                    data: rows.map((row) => ({
+                      key: row['day'],
+                      value: Number(row['total_sales']),
+                    })),
+                  },
+                ]}
+              />
+            </PolarisVizProvider>
+          ) : null}
+        </div>
       </s-section>
       {/* [END sales-dashboard.chart] */}
 
