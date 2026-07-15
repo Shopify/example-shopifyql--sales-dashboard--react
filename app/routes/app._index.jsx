@@ -1,3 +1,4 @@
+import {useEffect, useState} from 'react';
 import {useLoaderData, useNavigation} from 'react-router';
 import {LineChart, PolarisVizProvider} from '@shopify/polaris-viz';
 import '@shopify/polaris-viz/build/esm/styles.css';
@@ -67,6 +68,15 @@ export async function loader({request}) {
 export default function Index() {
   const {sales, currencyCode, topProducts} = useLoaderData();
   const navigation = useNavigation();
+
+  // [START sales-dashboard.client-only]
+  // Polaris Viz reads `window` when it renders, so the chart can't run during
+  // server-side rendering. Track when the component has mounted on the client,
+  // and render the chart only after that. The rest of the page still renders on
+  // the server.
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+  // [END sales-dashboard.client-only]
 
   // [START sales-dashboard.parse-errors]
   // A query that can't parse reports problems in parseErrors instead of
@@ -200,24 +210,26 @@ export default function Index() {
 
       {/* [START sales-dashboard.chart] */}
       <s-section heading="Daily trend">
-        <PolarisVizProvider>
-          <div style={{height: 320}}>
-            <LineChart
-              xAxisOptions={{
-                labelFormatter: (value) => shortDate.format(new Date(value)),
-              }}
-              data={[
-                {
-                  name: 'Total sales',
-                  data: rows.map((row) => ({
-                    key: row['day'],
-                    value: Number(row['total_sales']),
-                  })),
-                },
-              ]}
-            />
-          </div>
-        </PolarisVizProvider>
+        <div style={{height: 320}}>
+          {isClient ? (
+            <PolarisVizProvider>
+              <LineChart
+                xAxisOptions={{
+                  labelFormatter: (value) => shortDate.format(new Date(value)),
+                }}
+                data={[
+                  {
+                    name: 'Total sales',
+                    data: rows.map((row) => ({
+                      key: row['day'],
+                      value: Number(row['total_sales']),
+                    })),
+                  },
+                ]}
+              />
+            </PolarisVizProvider>
+          ) : null}
+        </div>
       </s-section>
       {/* [END sales-dashboard.chart] */}
 
