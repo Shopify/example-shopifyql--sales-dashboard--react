@@ -8,7 +8,7 @@ import {authenticate} from '../shopify.server';
 const TOP_PRODUCTS_QUERY = `
   query TopProducts {
     shopifyqlQuery(
-      query: "FROM sales SHOW product_title, net_sales GROUP BY product_title SINCE -30d ORDER BY net_sales DESC LIMIT 10"
+      query: "FROM sales SHOW net_sales GROUP BY TOP 10 product_title SINCE -30d ORDER BY net_sales DESC"
     ) {
       tableData {
         columns {
