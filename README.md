@@ -2,11 +2,11 @@
 
 A minimal embedded Shopify app that runs a [ShopifyQL](https://shopify.dev/docs/api/shopifyql) query with the GraphQL Admin API and renders the results in the Shopify admin. It's the companion code for the tutorial [Run your first ShopifyQL query](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api).
 
-The app sends a query through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` response, handles `parseErrors`, and renders the rows in a table. The query itself lives in `app/routes/app._index.jsx`.
+The app sends two ShopifyQL queries through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` responses, and checks `parseErrors` before rendering. The dashboard shows a headline total with its week-over-week change, a Polaris Viz trend chart, a daily breakdown table, and a top-products leaderboard, with money formatted in the store's currency and real loading and empty states. The queries live in `app/routes/app._index.jsx`.
 
 ## How it's built
 
-This sample is the [Shopify React Router app template](https://github.com/Shopify/shopify-app-template-react-router), written in JavaScript, with one route added: `app/routes/app._index.jsx`. The only configuration change from the template is the access scope in `shopify.app.toml` (`read_reports` instead of `write_products`).
+This sample is the [Shopify React Router app template](https://github.com/Shopify/shopify-app-template-react-router), written in JavaScript, with one route added at `app/routes/app._index.jsx`. It changes the access scope in `shopify.app.toml` from `write_products` to `read_reports`, and adds `@shopify/polaris-viz` for the trend chart.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ This sample is the [Shopify React Router app template](https://github.com/Shopif
    npm run dev
    ```
 
-3. Install the app on your development store when the CLI prompts you, then open it from the store's admin. The home page shows total sales and orders for the last 7 days.
+3. Install the app on your development store when the CLI prompts you, then open it from the store's admin. The home page shows this week's total sales with the change from last week, a daily trend chart, a breakdown table, and the top-selling products.
 
 ## Contributions
 

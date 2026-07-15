@@ -26,8 +26,11 @@ const TOP_PRODUCTS_QUERY = `
 // [START sales-dashboard.query]
 const SALES_QUERY = `
   query SalesThisWeek {
+    shop {
+      currencyCode
+    }
     shopifyqlQuery(
-      query: "FROM sales SHOW total_sales, orders TIMESERIES day SINCE -7d COMPARE TO previous_period WITH TOTALS, PERCENT_CHANGE ORDER BY day ASC"
+      query: "FROM sales SHOW total_sales, orders TIMESERIES day SINCE -7d COMPARE TO previous_period WITH TOTALS ORDER BY day ASC"
     ) {
       tableData {
         columns {
@@ -46,32 +49,39 @@ export async function loader({request}) {
   const {admin} = await authenticate.admin(request);
 
   // Run both queries together. The dashboard query drives the metric, chart,
-  // and detail table. The top-products query drives the leaderboard.
+  // and detail table, and reads the store's currency for formatting. The
+  // top-products query drives the leaderboard.
   const [salesResponse, topProductsResponse] = await Promise.all([
     admin.graphql(SALES_QUERY),
     admin.graphql(TOP_PRODUCTS_QUERY),
   ]);
 
-  const sales = (await salesResponse.json()).data.shopifyqlQuery;
+  const salesData = (await salesResponse.json()).data;
   const topProducts = (await topProductsResponse.json()).data.shopifyqlQuery;
 
-  return {sales, topProducts};
+  return {
+    sales: salesData.shopifyqlQuery,
+    currencyCode: salesData.shop.currencyCode,
+    topProducts,
+  };
 }
 // [END sales-dashboard.query]
 
 export default function Index() {
-  const {sales, topProducts} = useLoaderData();
+  const {sales, currencyCode, topProducts} = useLoaderData();
   const navigation = useNavigation();
 
   // [START sales-dashboard.parse-errors]
   // A ShopifyQL query that can't parse returns its problems in parseErrors
-  // rather than throwing. Check it before reading tableData.
-  if (sales.parseErrors.length > 0) {
+  // rather than throwing. Check every query's parseErrors before reading
+  // tableData, so one bad query shows a banner instead of a blank page.
+  const parseErrors = [...sales.parseErrors, ...topProducts.parseErrors];
+  if (parseErrors.length > 0) {
     return (
       <s-page heading="Sales">
         <s-banner heading="Your query couldn't run" tone="critical">
           <s-unordered-list>
-            {sales.parseErrors.map((error) => (
+            {parseErrors.map((error) => (
               <s-list-item key={error}>{error}</s-list-item>
             ))}
           </s-unordered-list>
@@ -91,11 +101,13 @@ export default function Index() {
   // [END sales-dashboard.read]
 
   // [START sales-dashboard.format]
-  // Every value arrives as a string, so format by the column's dataType.
-  // Parse before you calculate, and format before you display.
+  // Every value arrives as a string, so format by the column's dataType. Keep
+  // MONEY as a string through formatting to avoid rounding, and parse to a
+  // number only where you calculate. Format money in the store's currency,
+  // which the query read from the shop.
   const currency = new Intl.NumberFormat(undefined, {
     style: 'currency',
-    currency: 'USD',
+    currency: currencyCode,
   });
   const shortDate = new Intl.DateTimeFormat(undefined, {
     month: 'short',
@@ -119,19 +131,28 @@ export default function Index() {
   // [END sales-dashboard.format]
 
   // [START sales-dashboard.totals]
-  // WITH TOTALS, PERCENT_CHANGE repeats these values on every row, so read
-  // them from the first row by name. The percent change is already scaled to
-  // a percent, so display it with a sign and don't multiply by 100.
-  const firstRow = rows[0] ?? {};
-  const totalSales = firstRow['total_sales__totals'];
-  const percentChange = Number(
-    firstRow['percent_change_total_sales__previous_period__totals'],
+  // WITH TOTALS repeats the period total on every row, so read it from the
+  // first row by name and keep it as a string for display. COMPARE TO
+  // previous_period adds a comparison_total_sales__previous_period column with
+  // last week's value for each day. Sum those for last week's total, then
+  // compute the change by dividing by last week, skipping it when last week is
+  // zero so a new store doesn't show a misleading number.
+  const totalSales = rows[0]?.['total_sales__totals'] ?? '0';
+  const previousTotal = rows.reduce(
+    (sum, row) =>
+      sum + Number(row['comparison_total_sales__previous_period'] ?? 0),
+    0,
   );
+  const percentChange =
+    previousTotal === 0
+      ? null
+      : ((Number(totalSales) - previousTotal) / Math.abs(previousTotal)) * 100;
   // [END sales-dashboard.totals]
 
   // [START sales-dashboard.states]
-  // While the loader runs during a navigation, show a placeholder so the
-  // dashboard doesn't flash empty.
+  // React Router runs the loader before the first paint, so the initial load
+  // never flashes empty. This placeholder covers later navigations that re-run
+  // the loader, such as filters you might add.
   if (navigation.state === 'loading') {
     return (
       <s-page heading="Sales, last 7 days">
@@ -159,10 +180,18 @@ export default function Index() {
   }
   // [END sales-dashboard.states]
 
-  const changeTone = percentChange >= 0 ? 'success' : 'critical';
-  const changeLabel = `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(
-    1,
-  )}% vs last week`;
+  // [START sales-dashboard.metric]
+  // A brand-new store has no earlier sales to compare against, so percentChange
+  // is null. Show the badge only when there's a previous period. Keeping the
+  // tone in its own const preserves its literal type, so the s-badge tone stays
+  // valid if you move this into a TypeScript app.
+  const changeTone =
+    percentChange !== null && percentChange >= 0 ? 'success' : 'critical';
+  const changeLabel =
+    percentChange === null
+      ? null
+      : `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}% vs last week`;
+  // [END sales-dashboard.metric]
 
   return (
     <s-page heading="Sales, last 7 days">
@@ -170,7 +199,9 @@ export default function Index() {
       <s-section heading="Total sales">
         <s-stack direction="inline" gap="base" alignItems="center">
           <s-heading>{currency.format(totalSales)}</s-heading>
-          <s-badge tone={changeTone}>{changeLabel}</s-badge>
+          {changeLabel ? (
+            <s-badge tone={changeTone}>{changeLabel}</s-badge>
+          ) : null}
         </s-stack>
       </s-section>
       {/* [END sales-dashboard.metric] */}
@@ -231,9 +262,7 @@ export default function Index() {
             {topProducts.tableData.rows.map((row, index) => (
               <s-table-row key={index}>
                 <s-table-cell>{row['product_title']}</s-table-cell>
-                <s-table-cell>
-                  {currency.format(row['net_sales'])}
-                </s-table-cell>
+                <s-table-cell>{currency.format(row['net_sales'])}</s-table-cell>
               </s-table-row>
             ))}
           </s-table-body>
