@@ -2,17 +2,17 @@
 
 A minimal Shopify app, embedded in the Shopify admin, that builds a sales dashboard with [ShopifyQL](https://shopify.dev/docs/api/shopifyql) and the GraphQL Admin API. It's the companion code for the tutorial [Build a sales dashboard with the GraphQL Admin API](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api/build-a-sales-dashboard).
 
-The app sends two ShopifyQL queries through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` responses, and checks `parseErrors` before rendering. The dashboard shows a headline total with its week-over-week change, a Polaris Viz trend chart, a daily breakdown table, and a top-products leaderboard, with money formatted in the store's currency and loading, empty, and error states. The queries live in `app/routes/app._index.jsx`.
+The app sends two ShopifyQL queries through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` responses, and checks `parseErrors` before rendering. The dashboard shows a headline total with its week-over-week change, a Polaris Viz trend chart, a daily breakdown table, and a top-products leaderboard. Money is formatted in the store's currency, and the app handles loading, empty, and error states. The queries live in `app/routes/app._index.jsx`.
 
 ## How it's built
 
-This sample is the [Shopify React Router app template](https://github.com/Shopify/shopify-app-template-react-router), written in JavaScript, with one route added at `app/routes/app._index.jsx`. It changes the access scope in `shopify.app.toml` from `write_products` to `read_reports`, and adds `@shopify/polaris-viz` for the trend chart.
+This sample starts from the [Shopify React Router app template](https://github.com/Shopify/shopify-app-template-react-router), written in JavaScript. It adds one route at `app/routes/app._index.jsx`, changes the access scope in `shopify.app.toml` from `write_products` to `read_reports`, and adds `@shopify/polaris-viz` for the trend chart.
 
 ## Requirements
 
 - A [Shopify Partner account](https://www.shopify.com/partners) and a development store.
 - [Shopify CLI](https://shopify.dev/docs/api/shopify-cli) installed.
-- Node.js 20.19+ (or 22.12+).
+- Node.js 20.19 or later, or 22.12 or later.
 - The `read_reports` access scope and [Level 2 access to protected customer data](https://shopify.dev/docs/apps/launch/protected-customer-data), which `shopifyqlQuery` requires.
 
 ## Run locally
