@@ -123,14 +123,13 @@ export default function Index() {
   // [END sales-dashboard.format]
 
   // [START sales-dashboard.totals]
-  // WITH TOTALS repeats the period total on every row, and COMPARE TO adds a
-  // comparison_total_sales__previous_period value for each day. Sum those for
-  // last week's total, guarding divide-by-zero so a new store isn't misleading.
+  // WITH TOTALS repeats the period total on every row for this period and, with
+  // COMPARE TO, for the compared period too. Read both from the first row, then
+  // compute the change yourself, guarding divide-by-zero so a new store isn't
+  // misleading.
   const totalSales = rows[0]?.['total_sales__totals'] ?? '0';
-  const previousTotal = rows.reduce(
-    (sum, row) =>
-      sum + Number(row['comparison_total_sales__previous_period'] ?? 0),
-    0,
+  const previousTotal = Number(
+    rows[0]?.['comparison_total_sales__previous_period__totals'] ?? 0,
   );
   const percentChange =
     previousTotal === 0
