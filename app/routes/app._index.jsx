@@ -48,9 +48,6 @@ const SALES_QUERY = `
 export async function loader({request}) {
   const {admin} = await authenticate.admin(request);
 
-  // Run both queries together. The dashboard query drives the metric, chart,
-  // and detail table, and reads the store's currency for formatting. The
-  // top-products query drives the leaderboard.
   const [salesResponse, topProductsResponse] = await Promise.all([
     admin.graphql(SALES_QUERY),
     admin.graphql(TOP_PRODUCTS_QUERY),
@@ -72,9 +69,8 @@ export default function Index() {
   const navigation = useNavigation();
 
   // [START sales-dashboard.parse-errors]
-  // A ShopifyQL query that can't parse returns its problems in parseErrors
-  // rather than throwing. Check every query's parseErrors before reading
-  // tableData, so one bad query shows a banner instead of a blank page.
+  // A query that can't parse reports problems in parseErrors instead of
+  // throwing, so check it before reading tableData.
   const parseErrors = [...sales.parseErrors, ...topProducts.parseErrors];
   if (parseErrors.length > 0) {
     return (
@@ -94,17 +90,13 @@ export default function Index() {
   // [START sales-dashboard.read]
   const {columns, rows} = sales.tableData;
 
-  // Read cells by column name, never by position, so reordering the SHOW
-  // clause doesn't break the mapping. formatValue turns a null cell into a
-  // placeholder, so this accessor returns the raw value.
+  // Read cells by column name, not by position, so reordering SHOW is safe.
   const cell = (row, name) => row[name];
   // [END sales-dashboard.read]
 
   // [START sales-dashboard.format]
-  // Every value arrives as a string, so format by the column's dataType. Keep
-  // MONEY as a string through formatting to avoid rounding, and parse to a
-  // number only where you calculate. Format money in the store's currency,
-  // which the query read from the shop.
+  // Values arrive as strings, so format by the column's dataType. Keep MONEY
+  // as a string to avoid rounding, and format it in the store's currency.
   const currency = new Intl.NumberFormat(undefined, {
     style: 'currency',
     currency: currencyCode,
@@ -131,12 +123,9 @@ export default function Index() {
   // [END sales-dashboard.format]
 
   // [START sales-dashboard.totals]
-  // WITH TOTALS repeats the period total on every row, so read it from the
-  // first row by name and keep it as a string for display. COMPARE TO
-  // previous_period adds a comparison_total_sales__previous_period column with
-  // last week's value for each day. Sum those for last week's total, then
-  // compute the change by dividing by last week, skipping it when last week is
-  // zero so a new store doesn't show a misleading number.
+  // WITH TOTALS repeats the period total on every row, and COMPARE TO adds a
+  // comparison_total_sales__previous_period value for each day. Sum those for
+  // last week's total, guarding divide-by-zero so a new store isn't misleading.
   const totalSales = rows[0]?.['total_sales__totals'] ?? '0';
   const previousTotal = rows.reduce(
     (sum, row) =>
@@ -150,9 +139,6 @@ export default function Index() {
   // [END sales-dashboard.totals]
 
   // [START sales-dashboard.states]
-  // React Router runs the loader before the first paint, so the initial load
-  // never flashes empty. This placeholder covers later navigations that re-run
-  // the loader, such as filters you might add.
   if (navigation.state === 'loading') {
     return (
       <s-page heading="Sales, last 7 days">
@@ -163,9 +149,8 @@ export default function Index() {
     );
   }
 
-  // A store with no sales is a valid result, not an error. TIMESERIES fills
-  // every day in the range, so an empty period comes back as rows of zeros
-  // rather than zero rows. Treat a zero period total as empty.
+  // TIMESERIES fills every day in the range, so an empty period returns rows
+  // of zeros, not zero rows. Treat a zero period total as empty.
   if (rows.length === 0 || Number(totalSales) === 0) {
     return (
       <s-page heading="Sales, last 7 days">
@@ -181,10 +166,8 @@ export default function Index() {
   // [END sales-dashboard.states]
 
   // [START sales-dashboard.metric]
-  // A brand-new store has no earlier sales to compare against, so percentChange
-  // is null. Show the badge only when there's a previous period. Keeping the
-  // tone in its own const preserves its literal type, so the s-badge tone stays
-  // valid if you move this into a TypeScript app.
+  // A brand-new store has no earlier period, so percentChange is null. Show the
+  // change badge only when there's a previous period to compare against.
   const changeTone =
     percentChange !== null && percentChange >= 0 ? 'success' : 'critical';
   const changeLabel =
@@ -192,6 +175,16 @@ export default function Index() {
       ? null
       : `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}% vs last week`;
   // [END sales-dashboard.metric]
+
+  // [START sales-dashboard.render]
+  // WITH TOTALS and COMPARE TO added __totals and comparison_ columns the
+  // metric already uses. Show only the base per-day columns in the table.
+  const detailColumns = columns.filter(
+    (column) =>
+      !column.name.endsWith('__totals') &&
+      !column.name.startsWith('comparison_'),
+  );
+  // [END sales-dashboard.render]
 
   return (
     <s-page heading="Sales, last 7 days">
@@ -233,7 +226,7 @@ export default function Index() {
       <s-section heading="Daily breakdown">
         <s-table variant="auto">
           <s-table-header-row>
-            {columns.map((column) => (
+            {detailColumns.map((column) => (
               <s-table-header key={column.name}>
                 {column.displayName}
               </s-table-header>
@@ -242,7 +235,7 @@ export default function Index() {
           <s-table-body>
             {rows.map((row, index) => (
               <s-table-row key={index}>
-                {columns.map((column) => (
+                {detailColumns.map((column) => (
                   <s-table-cell key={column.name}>
                     {formatValue(cell(row, column.name), column.dataType)}
                   </s-table-cell>
