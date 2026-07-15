@@ -1,6 +1,6 @@
-# example-shopifyql--sales-dashboard--react
+# Sales dashboard with ShopifyQL and the GraphQL Admin API
 
-A minimal embedded Shopify app that builds a sales dashboard with [ShopifyQL](https://shopify.dev/docs/api/shopifyql) and the GraphQL Admin API. Because it's embedded, the dashboard renders inside the Shopify admin. It's the companion code for the tutorial [Build a sales dashboard with the GraphQL Admin API](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api).
+A minimal embedded Shopify app that builds a sales dashboard with [ShopifyQL](https://shopify.dev/docs/api/shopifyql) and the GraphQL Admin API. Because it's embedded, the dashboard renders inside the Shopify admin. It's the companion code for the tutorial [Build a sales dashboard with the GraphQL Admin API](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api/run-a-query).
 
 The app sends two ShopifyQL queries through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` responses, and checks `parseErrors` before rendering. The dashboard shows a headline total with its week-over-week change, a Polaris Viz trend chart, a daily breakdown table, and a top-products leaderboard, with money formatted in the store's currency and loading, empty, and error states. The queries live in `app/routes/app._index.jsx`.
 
@@ -33,7 +33,7 @@ This sample is the [Shopify React Router app template](https://github.com/Shopif
 
 ## Contributions
 
-This repository is a documentation sample. It doesn't accept issues or contributions. To report a problem with the tutorial, use the feedback control on the [tutorial page](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api).
+This repository is a documentation sample. It doesn't accept issues or contributions. To report a problem with the tutorial, use the feedback control on the [tutorial page](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api/run-a-query).
 
 ## License
 
