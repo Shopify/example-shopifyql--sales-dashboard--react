@@ -1,8 +1,8 @@
 # example-shopifyql--sales-dashboard--react
 
-A minimal embedded Shopify app that runs a [ShopifyQL](https://shopify.dev/docs/api/shopifyql) query with the GraphQL Admin API and renders the results in the Shopify admin. It's the companion code for the tutorial [Run your first ShopifyQL query](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api).
+A minimal embedded Shopify app that builds a sales dashboard with [ShopifyQL](https://shopify.dev/docs/api/shopifyql) and the GraphQL Admin API, rendered in the Shopify admin. It's the companion code for the tutorial [Build a sales dashboard with the GraphQL Admin API](https://shopify.dev/docs/apps/build/shopifyql/graphql-admin-api).
 
-The app sends two ShopifyQL queries through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` responses, and checks `parseErrors` before rendering. The dashboard shows a headline total with its week-over-week change, a Polaris Viz trend chart, a daily breakdown table, and a top-products leaderboard, with money formatted in the store's currency and real loading and empty states. The queries live in `app/routes/app._index.jsx`.
+The app sends two ShopifyQL queries through the [`shopifyqlQuery`](https://shopify.dev/docs/api/admin-graphql/latest/queries/shopifyqlQuery) field, reads the structured `tableData` responses, and checks `parseErrors` before rendering. The dashboard shows a headline total with its week-over-week change, a Polaris Viz trend chart, a daily breakdown table, and a top-products leaderboard, with money formatted in the store's currency and loading, empty, and error states. The queries live in `app/routes/app._index.jsx`.
 
 ## How it's built
 

@@ -211,6 +211,9 @@ export default function Index() {
         <PolarisVizProvider>
           <div style={{height: 320}}>
             <LineChart
+              xAxisOptions={{
+                labelFormatter: (value) => shortDate.format(new Date(value)),
+              }}
               data={[
                 {
                   name: 'Total sales',
