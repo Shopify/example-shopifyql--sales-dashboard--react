@@ -54,13 +54,27 @@ export async function loader({request}) {
     admin.graphql(TOP_PRODUCTS_QUERY),
   ]);
 
-  const salesData = (await salesResponse.json()).data;
-  const topProducts = (await topProductsResponse.json()).data.shopifyqlQuery;
+  const salesBody = await salesResponse.json();
+  const topProductsBody = await topProductsResponse.json();
+
+  // Transport-level problems, such as a missing access scope or ungranted
+  // protected customer data access, come back as top-level GraphQL errors with
+  // a null data payload. Check for them before reading the results, so the app
+  // shows an error instead of crashing.
+  const errors = [
+    ...(salesBody.errors ?? []),
+    ...(topProductsBody.errors ?? []),
+  ];
+  if (errors.length > 0) {
+    throw new Response(errors.map((error) => error.message).join('\n'), {
+      status: 500,
+    });
+  }
 
   return {
-    sales: salesData.shopifyqlQuery,
-    currencyCode: salesData.shop.currencyCode,
-    topProducts,
+    sales: salesBody.data.shopifyqlQuery,
+    currencyCode: salesBody.data.shop.currencyCode,
+    topProducts: topProductsBody.data.shopifyqlQuery,
   };
 }
 // [END sales-dashboard.query]
