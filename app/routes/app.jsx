@@ -15,8 +15,13 @@ export default function App() {
 
   return (
     <AppProvider embedded apiKey={apiKey}>
+      {/* [START campaign-dashboard.analytics-script] */}
+      {/* AppProvider already injects app-bridge.js and polaris.js. The analytics
+          UI script registers s-shopifyql-metric-card and isn't included. */}
+      <script src="https://cdn.shopify.com/shopifycloud/analytics-ui.js" />
+      {/* [END campaign-dashboard.analytics-script] */}
       <s-app-nav>
-        <s-link href="/app">Sales</s-link>
+        <s-link href="/app">Campaign</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>

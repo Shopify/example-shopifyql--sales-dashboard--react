@@ -3,16 +3,22 @@
 # Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
 client_id = ""
 
-# [START sales-dashboard.scopes]
+embedded = true
+
 [access_scopes]
-# read_reports grants access to a store's analytics and reporting data, which
-# ShopifyQL queries read through the shopifyqlQuery field. Request it when the
-# merchant installs your app.
-scopes = "read_reports"
-# [END sales-dashboard.scopes]
+# [START campaign-dashboard.scopes]
+# Granted at install. Changing this list re-prompts every user on next load.
+scopes = "read_reports,write_reports,read_analytics_annotations,write_analytics_annotations"
+# [END campaign-dashboard.scopes]
+
+# [START campaign-dashboard.direct-api]
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
+# [END campaign-dashboard.direct-api]
 
 [webhooks]
-api_version = "2025-10"
+api_version = "2026-10"
 
   # Handled by: /app/routes/webhooks.app.uninstalled.jsx
   [[webhooks.subscriptions]]

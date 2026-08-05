@@ -1,0 +1,5 @@
+name = "web"
+roles = ["backend", "frontend"]
+
+[commands]
+dev = "npm exec react-router dev"
